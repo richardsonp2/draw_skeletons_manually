@@ -124,8 +124,8 @@ load_btn = ttk.Button(frame, text="Load Input Directory", command=choose_input_d
 load_btn.grid(row=2, column=0)
 
 # Choose save directory button
-save_btn = ttk.Button(frame, text="Choose Save Directory", command=lambda: save_directory())
-save_btn.grid(row=2, column=1)
+save_dir_btn = ttk.Button(frame, text="Choose Save Directory", command=choose_save_directory)
+save_dir_btn.grid(row=2, column=1)
 
 # Save skeleton button
 save_btn = ttk.Button(frame, text="Save Skeleton and Next", command=save_skeleton)
