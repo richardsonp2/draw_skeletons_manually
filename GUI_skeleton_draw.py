@@ -24,19 +24,28 @@ current_file_index = 0  # Index to keep track of the current file
 
 # Callback function to draw the skeleton
 def draw_skeleton(event):
-    global drawing, skeleton_image, original_image
+    global drawing, skeleton_image, original_image, last_x, last_y
     if drawing:
         x, y = event.x, event.y
-        cv2.circle(skeleton_image, (x, y), 1, (255, 255, 255), -1)
+        if last_x is not None and last_y is not None:
+            cv2.line(skeleton_image, (last_x, last_y), (x, y), (255, 255, 255), 5)
+        last_x, last_y = x, y
         update_canvas()
 
 def start_drawing(event):
-    global drawing
+    global drawing, last_x, last_y
     drawing = True
+    last_x, last_y = event.x, event.y
 
 def stop_drawing(event):
-    global drawing
+    global drawing, last_x, last_y
     drawing = False
+    last_x, last_y = None, None
+
+def clear_skeleton():
+    global skeleton_image
+    skeleton_image = np.zeros_like(original_image)
+    update_canvas()
 
 def update_canvas():
     global skeleton_image, original_image
@@ -134,6 +143,9 @@ save_btn.grid(row=2, column=3)
 # Quit button
 quit_btn = ttk.Button(frame, text="Quit", command=root.quit)
 quit_btn.grid(row=2, column=4)
+
+clear_btn = ttk.Button(frame, text="Clear", command=clear_skeleton)
+clear_btn.grid(row=3, column=0, columnspan=2)
 
 # Canvas for image display
 canvas = Canvas(root, width=800, height=800, bg="white")
