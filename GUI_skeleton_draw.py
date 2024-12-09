@@ -6,6 +6,148 @@ import numpy as np
 import cv2
 import os  # Import the os module to handle directory operations
 
+
+class SkeletonGenerator:
+    def __init__(self):
+        # Initialize global variables
+        self.skeleton_image = None
+        self.original_image = None
+        self.drawing = False
+        self.file_path = None  # Store the file path of the loaded image
+        self.save_directory = None  # Store the directory where skeletons will be saved
+        self.input_directory = None  # Store the directory where images are loaded
+        self.file_list = []  # List of image files in the input directory
+        self.current_file_index = 0  # Index to keep track of the current file
+
+        # Create the main frame
+        self.root = Tk()
+        self.root.title("GUI Skeleton Generator")
+        ico = Image.open('./icons/skeleton.jpg')
+        photo = ImageTk.PhotoImage(ico)
+        self.root.wm_iconphoto(False, photo)
+
+        # Create the main frame
+        self.frame = ttk.Frame(self.root)
+        self.frame.grid(row=0, column=0)
+
+        # Label to show the input directory
+        self.input_label = ttk.Label(self.frame, text="Input directory:")
+        self.input_label.grid(row=0, column=0)
+
+        # Label to display the directory where the images are loaded
+        self.input_folder = ttk.Label(self.frame, text="No folder selected")
+        self.input_folder.grid(row=0, column=1)
+
+        # Label to show the save directory
+        self.save_label = ttk.Label(self.frame, text="Save skeletons to:")
+        self.save_label.grid(row=1, column=0)
+
+        # Label to display the directory where the skeletons are saved
+        self.saved_folder = ttk.Label(self.frame, text="No folder selected")
+        self.saved_folder.grid(row=1, column=1)
+
+        # Load image button
+        self.load_btn = ttk.Button(self.frame, text="Load Input Directory", command=self.choose_input_directory)
+        self.load_btn.grid(row=2, column=0)
+
+        # Choose save directory button
+        self.save_dir_btn = ttk.Button(self.frame, text="Choose Save Directory", command=self.choose_save_directory)
+        self.save_dir_btn.grid(row=2, column=1)
+
+        # Save skeleton button
+        self.save_btn = ttk.Button(self.frame, text="Save Skeleton and Next", command=self.save_skeleton)
+        self.save_btn.grid(row=2, column=3)
+
+        # Quit button
+        self
+
+        # Callback function to draw the skeleton
+        def draw_skeleton(event):
+            global drawing, skeleton_image, original_image, last_x, last_y
+            if drawing:
+                x, y = event.x, event.y
+                if last_x is not None and last_y is not None:
+                    cv2.line(skeleton_image, (last_x, last_y), (x, y), (255, 255, 255), 5)
+                last_x, last_y = x, y
+                update_canvas()
+
+        def start_drawing(event):
+            global drawing, last_x, last_y
+            drawing = True
+            last_x, last_y = event.x, event.y
+
+        def stop_drawing(event):
+            global drawing, last_x, last_y
+            drawing = False
+            last_x, last_y = None, None
+
+        def clear_skeleton():
+            global skeleton_image
+            skeleton_image = np.zeros_like(original_image)
+            update_canvas()
+
+        def update_canvas():
+            global skeleton_image, original_image
+            # Combine original image and skeleton
+            combined_image = cv2.addWeighted(original_image, 0.7, skeleton_image, 0.3, 0)
+            # Convert to RGB for Tkinter
+            combined_image = cv2.cvtColor(combined_image, cv2.COLOR_BGR2RGB)
+            im = Image.fromarray(combined_image)
+            img = ImageTk.PhotoImage(image=im)
+            canvas.create_image(0, 0, anchor=NW, image=img)
+            canvas.image = img
+
+        def choose_input_directory():
+            global input_directory, file_list, current_file_index
+            input_directory = filedialog.askdirectory()
+            input_folder.config(text=input_directory)
+            if input_directory:
+                # List all image files in the directory
+                file_list = [f for f in os.listdir(input_directory) if f.endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp'))]
+                file_list.sort()  # Sort the files alphabetically
+                current_file_index = 0  # Reset to the first file
+                load_next_image()
+
+        def load_next_image():
+            global skeleton_image, original_image, file_path, current_file_index
+            if current_file_index < len(file_list):
+                file_path = os.path.join(input_directory, file_list[current_file_index])
+                # Load the image using OpenCV
+                original_image = cv2.imread(file_path)
+                # Convert the image to grayscale
+                original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2GRAY)
+                # Create a blank skeleton image
+                skeleton_image = np.zeros_like(original_image)
+                update_canvas()
+
+        def choose_save_directory():
+            global save_directory
+            save_directory = filedialog.askdirectory()
+            saved_folder.config(text=save_directory)
+
+        def save_skeleton():
+            global save_directory, current_file_index
+            if skeleton_image is not None:
+                if not save_directory:
+                    save_directory = filedialog.askdirectory()
+                    saved_folder.config(text=save_directory)
+                if save_directory:
+                    # Get the original file name
+                    original_filename = os.path.basename(file_path)
+                    # Construct the full path to save the skeleton image
+                    save_path = os.path.join(save_directory, original_filename)
+                    # Save the skeleton image
+                    cv2.imwrite(save_path, skeleton_image)
+                    print(f"Skeleton saved to {save_path}")
+                    # Move to the next image
+                    current_file_index += 1
+                    if current_file_index < len(file_list):
+                        load_next_image()
+                    else:
+                        print("All images processed!")
+                        current_file_index = 0  # Reset index if needed
+            
+
 root = Tk()
 root.title("GUI Skeleton Generator")
 ico = Image.open('./icons/skeleton.jpg')
@@ -24,6 +166,8 @@ current_file_index = 0  # Index to keep track of the current file
 
 # Callback function to draw the skeleton
 def draw_skeleton(event):
+    """ Function to draw the skeleton on the cell image
+    """
     global drawing, skeleton_image, original_image, last_x, last_y
     if drawing:
         x, y = event.x, event.y
