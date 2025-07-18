@@ -1,0 +1,11 @@
+TODO 
+
+Add a Soma/cell body setting. For now a circle? Maybe later a multiline shape. 
+
+Clean up the GUI, pop out window that asks about input and output drives.
+
+Draw tools as icons. More importantly have adrawing, erasing, 
+
+MIP button? Stacks? Get it roughly working well then discuss with Jack and see what would be useful perhaps? 
+
+Begin the ML part of this. Skeleton is the target (y), 1D vector of intensities is the data (X), need to generate new file with both of these linked? 
